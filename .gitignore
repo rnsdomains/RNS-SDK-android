@@ -1,0 +1,4 @@
+/build
+src/test/resources/contracts/abi/
+src/test/resources/contracts/out/
+src/test/resources/contracts/bin/

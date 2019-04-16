@@ -1,0 +1,51 @@
+apply plugin: 'com.android.library'
+
+android {
+
+    compileSdkVersion 28
+
+    defaultConfig {
+        //Configuration for prod
+        buildConfigField "String", "NODE", '"https://public-node.rsk.co"'
+        buildConfigField "String", "RESOLVER_ADDRESS", '"0x4efd25e3d348f8f25a14fb7655fba6f72edfe93a"'
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    api 'org.web3j:core:4.2.0-android'
+    implementation 'com.google.guava:guava-primitives:r03'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.61'
+}
+
+
