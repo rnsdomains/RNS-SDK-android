@@ -20,13 +20,15 @@ public class RnsResolver {
 
     private final Web3j web3;
     private String publicResolverAddress;
-    //private Map<String, PublicResolver> cache = new ConcurrentHashMap<String, PublicResolver>();
     private PublicResolver publicResolver;
 
+    //The default resolver is to MainNet
+    public RnsResolver() {
+        this(BuildConfig.NODE, BuildConfig.RESOLVER_ADDRESS);
+    }
+
     public RnsResolver(String nodeDir, String publicResolverAddress) {
-        HttpService httpService = new HttpService(nodeDir);
-        this.web3 = Web3j.build(httpService);
-        this.publicResolverAddress = publicResolverAddress;
+        this(Web3j.build(new HttpService(nodeDir)), publicResolverAddress);
     }
 
     public RnsResolver(Web3j web3, String publicResolverAddress) {
