@@ -40,6 +40,8 @@ public class RnsResolverTest {
     public static final String OK_STATUS = "0x1";
     public static final String OK_STATUS_RSK = "0x01";
     public static final String NAME = "foo.rsk";
+    public static final String NAME_FOR_ANOTHER_RESOLVER = "foo2.rsk";
+
 
     private List<String> ACCOUNTS = new ArrayList<>();
     private byte[] BYTES_FOR_TEST = new byte[32];
@@ -60,12 +62,13 @@ public class RnsResolverTest {
 
             EthAccounts ethAccounts = web3.ethAccounts().send();
             ACCOUNTS = ethAccounts.getAccounts();
-            assertTrue(ACCOUNTS.size() >= 2);
+            assertTrue(ACCOUNTS.size() >= 3);
             //here we define the FROM address for every transaction;
             ClientTransactionManager transactionManager =
                     new ClientTransactionManager(web3, ACCOUNTS.get(0));
             RNS rnsContract;
             PublicResolver resolverContract;
+            PublicResolver anotherResolverContract;
                 rnsContract = RNS.deploy(web3,
                         transactionManager,
                         BigInteger.valueOf(1000000l),
@@ -77,14 +80,23 @@ public class RnsResolverTest {
                         BigInteger.valueOf(1000000l),
                         BigInteger.valueOf(GAS_LIMIT),
                         rnsContract.getContractAddress()).send();
+
+                anotherResolverContract = PublicResolver.deploy(
+                        web3,
+                        transactionManager,
+                        BigInteger.valueOf(1000000l),
+                        BigInteger.valueOf(GAS_LIMIT),
+                        rnsContract.getContractAddress()).send();
             byte[] rskHash = Hash.sha3("rsk".getBytes(Compat.UTF_8));
             byte[] fooHash = Hash.sha3("foo".getBytes(Compat.UTF_8));
             byte[] nodeFooDotRsk = NameHash.nameHashAsBytes(NAME);
+            byte[] nodeForAnotherResolver = NameHash.nameHashAsBytes(NAME_FOR_ANOTHER_RESOLVER);
             String resolverAddress = resolverContract.getContractAddress();
             rnsContract.setSubnodeOwner(new byte[32], rskHash, ACCOUNTS.get(0)).send();
             rnsContract.setSubnodeOwner(NameHash.nameHashAsBytes("rsk"), fooHash, ACCOUNTS.get(0)).send();
             rnsContract.setResolver(nodeFooDotRsk, resolverAddress).send();
-            //System.out.println(NAME+" -> NameHash:"+Hex.toHexString(nodeFooDotRsk)+" -> Map into: "+ACCOUNTS.get(0));
+            rnsContract.setResolver(nodeForAnotherResolver, anotherResolverContract.getContractAddress()).send();
+            anotherResolverContract.setAddr(nodeForAnotherResolver, ACCOUNTS.get(2)).send();
             resolverContract.setAddr(nodeFooDotRsk, ACCOUNTS.get(0)).send();
             assertEquals(resolverContract.addr(nodeFooDotRsk).send(), ACCOUNTS.get(0));
             resolverContract.setContent(nodeFooDotRsk, BYTES_FOR_TEST).send();
@@ -191,7 +203,16 @@ public class RnsResolverTest {
         } catch (Exception e) {
             fail(e.getMessage());
         }
+    }
 
+    @Test
+    public void testDifferentResolverPublicResolver() {
+        try {
+            String result = resolver.getAddress(NAME);
+            assertEquals(ACCOUNTS.get(2), result);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
     }
 
     @Test
