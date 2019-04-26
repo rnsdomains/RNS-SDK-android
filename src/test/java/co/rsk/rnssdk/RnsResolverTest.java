@@ -14,6 +14,7 @@ import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.ClientTransactionManager;
+import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -40,7 +41,7 @@ public class RnsResolverTest {
     public static final String OK_STATUS = "0x1";
     public static final String OK_STATUS_RSK = "0x01";
     public static final String NAME = "foo.rsk";
-    public static final String NAME_FOR_ANOTHER_RESOLVER = "foo2.rsk";
+    public static final String NAME_FOR_ANOTHER_RESOLVER = "foo.rif";
 
 
     private List<String> ACCOUNTS = new ArrayList<>();
@@ -64,45 +65,55 @@ public class RnsResolverTest {
             ACCOUNTS = ethAccounts.getAccounts();
             assertTrue(ACCOUNTS.size() >= 3);
             //here we define the FROM address for every transaction;
-            ClientTransactionManager transactionManager =
+            ClientTransactionManager transactionManagerFrom0 =
                     new ClientTransactionManager(web3, ACCOUNTS.get(0));
+            ClientTransactionManager transactionManagerFrom2 =
+                    new ClientTransactionManager(web3, ACCOUNTS.get(2));
             RNS rnsContract;
+            RNS rnsContractFrom2;
             PublicResolver resolverContract;
             PublicResolver anotherResolverContract;
                 rnsContract = RNS.deploy(web3,
-                        transactionManager,
+                        transactionManagerFrom0,
                         BigInteger.valueOf(1000000l),
                         BigInteger.valueOf(GAS_LIMIT)).send();
 
+                rnsContractFrom2 = RNS.load(rnsContract.getContractAddress(),
+                        web3,
+                        transactionManagerFrom2,
+                        new DefaultGasProvider());
+
                 resolverContract = PublicResolver.deploy(
                         web3,
-                        transactionManager,
+                        transactionManagerFrom0,
                         BigInteger.valueOf(1000000l),
                         BigInteger.valueOf(GAS_LIMIT),
                         rnsContract.getContractAddress()).send();
 
                 anotherResolverContract = PublicResolver.deploy(
                         web3,
-                        transactionManager,
+                        transactionManagerFrom2,
                         BigInteger.valueOf(1000000l),
                         BigInteger.valueOf(GAS_LIMIT),
                         rnsContract.getContractAddress()).send();
             byte[] rskHash = Hash.sha3("rsk".getBytes(Compat.UTF_8));
+            byte[] rifHash = Hash.sha3("rif".getBytes(Compat.UTF_8));
             byte[] fooHash = Hash.sha3("foo".getBytes(Compat.UTF_8));
             byte[] nodeFooDotRsk = NameHash.nameHashAsBytes(NAME);
             byte[] nodeForAnotherResolver = NameHash.nameHashAsBytes(NAME_FOR_ANOTHER_RESOLVER);
             String resolverAddress = resolverContract.getContractAddress();
+            rnsAddress = rnsContract.getContractAddress();
             rnsContract.setSubnodeOwner(new byte[32], rskHash, ACCOUNTS.get(0)).send();
+            rnsContract.setSubnodeOwner(new byte[32], rifHash, ACCOUNTS.get(0)).send();
             rnsContract.setSubnodeOwner(NameHash.nameHashAsBytes("rsk"), fooHash, ACCOUNTS.get(0)).send();
+            rnsContract.setSubnodeOwner(NameHash.nameHashAsBytes("rif"), fooHash, ACCOUNTS.get(2)).send();
             rnsContract.setResolver(nodeFooDotRsk, resolverAddress).send();
-            rnsContract.setResolver(nodeForAnotherResolver, anotherResolverContract.getContractAddress()).send();
+            rnsContractFrom2.setResolver(nodeForAnotherResolver, anotherResolverContract.getContractAddress()).send();
             anotherResolverContract.setAddr(nodeForAnotherResolver, ACCOUNTS.get(2)).send();
             resolverContract.setAddr(nodeFooDotRsk, ACCOUNTS.get(0)).send();
             assertEquals(resolverContract.addr(nodeFooDotRsk).send(), ACCOUNTS.get(0));
             resolverContract.setContent(nodeFooDotRsk, BYTES_FOR_TEST).send();
-            //System.out.println(resolverContract.getContractAddress());
-            resolver = new RnsResolver(web3, resolverAddress);
-            //resolverContract.setAddr(NameHash.nameHashAsBytes(NAME), ACCOUNTS.get(1)).send();
+            resolver = new RnsResolver(web3, resolverAddress, rnsAddress);
             assertTrue("rns contract is not valid", rnsContract.isValid());
             assertTrue("resolver contract is not valid", resolverContract.isValid());
             assertTrue("resolver contract is not valid", resolver.getResolver(null).isValid());
@@ -208,7 +219,7 @@ public class RnsResolverTest {
     @Test
     public void testDifferentResolverPublicResolver() {
         try {
-            String result = resolver.getAddress(NAME);
+            String result = resolver.getAddress(NAME_FOR_ANOTHER_RESOLVER);
             assertEquals(ACCOUNTS.get(2), result);
         } catch (Exception e) {
             fail(e.getMessage());
