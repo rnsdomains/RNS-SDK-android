@@ -116,27 +116,12 @@ public class RnsResolverTest {
             resolver = new RnsResolver(web3, resolverAddress, rnsAddress);
             assertTrue("rns contract is not valid", rnsContract.isValid());
             assertTrue("resolver contract is not valid", resolverContract.isValid());
-            assertTrue("resolver contract is not valid", resolver.getResolver(null).isValid());
         } catch (IOException e) {
             fail("IOException: " + e.getMessage() + " make sure node is in localhost:8545");
         } catch (Exception e) {
             fail(e.getMessage());
         }
 
-    }
-
-    private void waitMinned(Web3j web3j, TransactionReceipt receipt) throws Exception {
-        System.out.println("STATUS: "+receipt.getStatus());
-        assertTrue(receipt.getStatus().equals(OK_STATUS) || receipt.getStatus().equals(OK_STATUS_RSK));
-        while (true) {
-            EthGetTransactionReceipt transactionReceipt = web3j
-                    .ethGetTransactionReceipt(receipt.getTransactionHash())
-                    .send();
-            if (transactionReceipt.getResult() != null) {
-                break;
-            }
-            Thread.sleep(15000);
-        }
     }
 
     @Test
@@ -199,7 +184,7 @@ public class RnsResolverTest {
     @Test
     public void testFunctionNotImplementedHas() {
         try {
-            boolean result = resolver.has(NAME, "boom");
+            boolean result = resolver.has(NAME, "Kboom");
             assertFalse(result);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -249,8 +234,8 @@ public class RnsResolverTest {
     @Test
     public void testShouldImplementSupportsInterface() {
         try {
-            assertTrue(resolver.supportsInterface("3b3b57de") &&
-                    resolver.supportsInterface("d8389dc5"));
+            assertTrue(resolver.supportsInterface(NAME,"3b3b57de") &&
+                    resolver.supportsInterface(NAME,"d8389dc5"));
         } catch (Exception e) {
             fail(e.getMessage());
         }
