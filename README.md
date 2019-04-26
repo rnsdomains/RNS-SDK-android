@@ -1,6 +1,6 @@
 # RNS-Android-SDK
 
-Implementation for resolvers for the RSK Name Service, available for Android.
+Implementation for resolvers for the RIF Name Service, available for Android.
 
 ## Testing
 
@@ -20,7 +20,7 @@ Then you can run your test in your Android Studio or any IDE you are running
 Clone this project.
 
 ```console
-user@computer:~/some/path/$ git clone git@github.com:rootstock/RNS-SDK-android.git
+user@computer:~/some/path/$ git clone git@github.com:rnsdomains/RNS-SDK-android.git
 Cloning into 'RNS-SDK-android'...
 ```
 
