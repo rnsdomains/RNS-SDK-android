@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package co.rsk.rnssdk;
+package co.rsk.commons;
 
 import com.google.common.primitives.UnsignedBytes;
 import org.bouncycastle.util.encoders.Hex;
