@@ -23,7 +23,6 @@ public class RnsResolver {
     private final RNS rns;
     private String publicResolverAddress;
     public final static String EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000";
-    private PublicResolver publicResolver;
 
     //The default resolver is to MainNet
     public RnsResolver() {
@@ -52,15 +51,16 @@ public class RnsResolver {
     }
 
     public boolean setAddress(String name, String address, String from) throws Exception {
+        new RskAddress(address); //Check if it is a valid RSK address
         ResolverInterface resolver = loadResolver(name, from);
         return resolver.setAddr(NameHash.nameHashAsBytes(name), address).send().getStatus().equals("0x1");
     }
 
-    public String getAddress(String name) throws Exception {
+    public RskAddress getAddress(String name) throws Exception {
         if (isValidRnsName(name)) {
-            return loadResolver(name,null).addr(NameHash.nameHashAsBytes(name)).send();
+            return new RskAddress(loadResolver(name,null).addr(NameHash.nameHashAsBytes(name)).send());
         }
-        return name;
+        return RskAddress.nullAddress();
     }
 
     Map<String, ResolverInterface> cache = new HashMap<>();
@@ -87,7 +87,6 @@ public class RnsResolver {
             cache.put(node+":"+from, resolver);
         }
 
-        /*cache.put(from,resolver);*/
         return resolver;
     }
 

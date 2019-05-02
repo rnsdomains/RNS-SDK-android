@@ -10,8 +10,6 @@ import org.web3j.ens.NameHash;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.methods.response.EthAccounts;
-import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.gas.DefaultGasProvider;
@@ -38,8 +36,6 @@ public class RnsResolverTest {
 
     private static final long GAS_LIMIT = 6721975l;
     private static final byte[] HASH = Hex.decode("89ad40fcd44690fb5aa90e0fa51637c1b2d388f8056d68430d41c8284a6a7d5e");
-    public static final String OK_STATUS = "0x1";
-    public static final String OK_STATUS_RSK = "0x01";
     public static final String NAME = "foo.rsk";
     public static final String NAME_FOR_ANOTHER_RESOLVER = "foo.rif";
 
@@ -129,8 +125,8 @@ public class RnsResolverTest {
         try {
             String expectedAccount = ACCOUNTS.get(1);
             assertTrue(resolver.setAddress(NAME, expectedAccount, ACCOUNTS.get(0)));
-            String address = resolver.getAddress(NAME);
-            assertEquals(address, expectedAccount);
+            String address = resolver.getAddress(NAME).toString();
+            assertEquals(expectedAccount, "0x"+address);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -194,8 +190,8 @@ public class RnsResolverTest {
     @Test
     public void testShouldResolveName() {
         try {
-            String result = resolver.getAddress(NAME);
-            assertEquals(ACCOUNTS.get(0), result);
+            String result = resolver.getAddress(NAME).toString();
+            assertEquals(ACCOUNTS.get(0), "0x"+result);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -204,8 +200,8 @@ public class RnsResolverTest {
     @Test
     public void testDifferentResolverPublicResolver() {
         try {
-            String result = resolver.getAddress(NAME_FOR_ANOTHER_RESOLVER);
-            assertEquals(ACCOUNTS.get(2), result);
+            String result = resolver.getAddress(NAME_FOR_ANOTHER_RESOLVER).toString();
+            assertEquals(ACCOUNTS.get(2), "0x"+result);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -224,8 +220,8 @@ public class RnsResolverTest {
     @Test
     public void testShouldntResolveName() {
         try {
-            String result = resolver.getAddress("foo");
-            assertEquals("0x0000000000000000000000000000000000000000", result);
+            String result = resolver.getAddress("foo").toString();
+            assertEquals("0x0000000000000000000000000000000000000000", "0x"+result);
         } catch (Exception e) {
             fail(e.getMessage());
         }
