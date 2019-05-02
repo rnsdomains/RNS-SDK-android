@@ -6,6 +6,8 @@ import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 
+import co.rsk.commons.DataWord;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -338,9 +340,9 @@ public class DataWordTest {
     }
 
     void testAddMod(String v1, String v2, String v3) {
-        DataWord dv1 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode(v1));
-        DataWord dv2 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode(v2));
-        DataWord dv3 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode(v3));
+        DataWord dv1 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode(v1));
+        DataWord dv2 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode(v2));
+        DataWord dv3 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode(v3));
 
         byte[] datadv1 = dv1.getData();
         byte[] datadv2 = dv2.getData();
@@ -363,9 +365,9 @@ public class DataWordTest {
 
     @Test
     public void testMulMod1() {
-        DataWord wr = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
-        DataWord w1 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("01"));
-        DataWord w2 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999998"));
+        DataWord wr = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
+        DataWord w1 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("01"));
+        DataWord w2 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999998"));
 
         byte[] datawr = wr.getData();
         byte[] dataw1 = w1.getData();
@@ -377,14 +379,14 @@ public class DataWordTest {
         assertArrayEquals(dataw1, w1.getData());
         assertArrayEquals(dataw2, w2.getData());
         assertEquals(32, result.getData().length);
-        assertEquals("0000000000000000000000000000000000000000000000000000000000000001", org.spongycastle.util.encoders.Hex.toHexString(result.getData()));
+        assertEquals("0000000000000000000000000000000000000000000000000000000000000001", org.bouncycastle.util.encoders.Hex.toHexString(result.getData()));
     }
 
     @Test
     public void testMulMod2() {
-        DataWord wr = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
-        DataWord w1 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("01"));
-        DataWord w2 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
+        DataWord wr = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
+        DataWord w1 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("01"));
+        DataWord w2 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
 
         byte[] datawr = wr.getData();
         byte[] dataw1 = w1.getData();
@@ -401,9 +403,9 @@ public class DataWordTest {
 
     @Test
     public void testMulModZero() {
-        DataWord wr = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("00"));
-        DataWord w1 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
-        DataWord w2 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        DataWord wr = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("00"));
+        DataWord w1 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
+        DataWord w2 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 
         byte[] datawr = wr.getData();
         byte[] dataw1 = w1.getData();
@@ -420,9 +422,9 @@ public class DataWordTest {
 
     @Test
     public void testMulModZeroWord1() {
-        DataWord wr = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
-        DataWord w1 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("00"));
-        DataWord w2 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        DataWord wr = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
+        DataWord w1 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("00"));
+        DataWord w2 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 
         byte[] datawr = wr.getData();
         byte[] dataw1 = w1.getData();
@@ -439,9 +441,9 @@ public class DataWordTest {
 
     @Test
     public void testMulModZeroWord2() {
-        DataWord wr = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
-        DataWord w1 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
-        DataWord w2 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("00"));
+        DataWord wr = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("9999999999999999999999999999999999999999999999999999999999999999"));
+        DataWord w1 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        DataWord w2 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("00"));
 
         byte[] datawr = wr.getData();
         byte[] dataw1 = w1.getData();
@@ -458,9 +460,9 @@ public class DataWordTest {
 
     @Test
     public void testMulModOverflow() {
-        DataWord wr = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
-        DataWord w1 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
-        DataWord w2 = DataWord.valueOf(org.spongycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        DataWord wr = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        DataWord w1 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        DataWord w2 = DataWord.valueOf(org.bouncycastle.util.encoders.Hex.decode("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 
         byte[] datawr = wr.getData();
         byte[] dataw1 = w1.getData();
