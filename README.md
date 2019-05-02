@@ -55,4 +55,4 @@ Or you can use another constructor if you want to use a personal node.
  RnsResolver resolver = new RnsResolver("http://your.node.org", "RSK_ADDRES_TO_YOUR_RESOLVER");
 ```
 
-Then you can start using your resolver in the [AsyncTask](https://developer.android.com/reference/android/os/AsyncTask) defined in the android API.
+Then you can start using your resolver in the [AsyncTask](https://developer.android.com/reference/android/os/AsyncTask) defined in the android API. As you can see in this example [RNS Android Sample App](https://github.com/rnsdomains/rns-android-sampleapp).
