@@ -20,6 +20,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+import co.rsk.commons.FastByteComparisons;
 import co.rsk.rnssdk.contracts.PublicResolver;
 import co.rsk.rnssdk.contracts.RNS;
 

@@ -13,7 +13,7 @@ import org.web3j.tx.gas.DefaultGasProvider;
 import java.util.HashMap;
 import java.util.Map;
 
-import co.rsk.rnssdk.contracts.PublicResolver;
+import co.rsk.commons.RskAddress;
 import co.rsk.rnssdk.contracts.RNS;
 import co.rsk.rnssdk.contracts.ResolverInterface;
 

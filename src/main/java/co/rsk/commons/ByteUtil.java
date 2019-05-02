@@ -1,4 +1,4 @@
-package co.rsk.rnssdk;
+package co.rsk.commons;
 
 import android.support.annotation.NonNull;
 
