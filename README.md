@@ -16,8 +16,7 @@ Then you can run your test in your Android Studio or any IDE you are running
 
 ## Import into your app
 
-
-Clone this project.
+#### Method 1: Clone this project.
 
 ```console
 user@computer:~/some/path/$ git clone git@github.com:rnsdomains/RNS-SDK-android.git
@@ -29,6 +28,23 @@ Import using AndroidStudio
 File -> New -> Import Module...
 
 ![Import Module Dialog](/images/ImportFromSource.png)
+
+#### Method 2: Import the AAR.
+
+You can go to our [release page](https://github.com/rnsdomains/RNS-SDK-android/releases), and download the release. Here you have the AAR to import into your project, including the debug lib to use it.
+
+#### With either of those methods methods
+
+You will have to add this lines to your `build.gradle` file, or do it in your Project Settings ( CTRL+ALT+SHIFT+S ) and set sourceCompatibility to 1.8:
+
+```
+android {
+         compileOptions {
+             sourceCompatibility 1.8
+             targetCompatibility 1.8
+         }
+    }
+```
 
 ## How to use
 
