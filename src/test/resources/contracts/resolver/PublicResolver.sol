@@ -1,6 +1,6 @@
-pragma solidity ^0.5.6;
+pragma solidity ^0.5.2;
 
-import './AbstractRNS.sol';
+import "../registry/AbstractRNS.sol";
 
 /**
  * A simple resolver anyone can use; only allows the owner of a node to set its
@@ -27,7 +27,7 @@ contract PublicResolver {
     /**
      * Fallback function.
      */
-    function() external {
+    function() payable external {
         revert();
     }
 
@@ -39,7 +39,7 @@ contract PublicResolver {
      *         provided node.
      */
     function has(bytes32 node, bytes32 kind) public view returns (bool) {
-        return  (kind == "addr" && addresses[node] != 0) || 
+        return  (kind == "addr" && addresses[node] != address(0)) || 
         (kind == "hash" && hashes[node] != 0);
     }
 
