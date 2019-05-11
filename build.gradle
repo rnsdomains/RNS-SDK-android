@@ -8,7 +8,7 @@ android {
         //Configuration for prod
         buildConfigField "String", "NODE", '"https://public-node.rsk.co"'
         buildConfigField "String", "RESOLVER_ADDRESS", '"0x4efd25e3d348f8f25a14fb7655fba6f72edfe93a"'
-        buildConfigField "String", "RNS_ADDRESS", '"0xcb868aeabd31e2b66f74e9a55cf064abb31a4ad5"'
+        buildConfigField "String", "RNS_ADDRESS", '"0x99a12be4c89cbf6cfd11d1f2c029904a7b644368"'
     }
 
     lintOptions {

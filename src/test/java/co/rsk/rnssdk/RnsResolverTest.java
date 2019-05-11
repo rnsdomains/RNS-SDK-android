@@ -122,12 +122,18 @@ public class RnsResolverTest {
     }
 
     @Test
+    public void testShit() {
+        //0x99a12be4c89cbf6cfd11d1f2c029904a7b644368
+
+    }
+
+    @Test
     public void testSetAddress() {
         try {
             String expectedAccount = ACCOUNTS.get(1);
             assertTrue(resolver.setAddress(NAME, expectedAccount, ACCOUNTS.get(0)));
             String address = resolver.getAddress(NAME).toString();
-            assertEquals(expectedAccount, "0x"+address);
+            assertEquals(expectedAccount, address);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -137,7 +143,6 @@ public class RnsResolverTest {
     public void testSetNotOwnedAddress() {
         try {
             String expectedAccount = ACCOUNTS.get(1);
-            assertTrue(resolver.setAddress(NAME, expectedAccount, ACCOUNTS.get(0)));
             assertTrue(resolver.setAddress(NAME, expectedAccount, ACCOUNTS.get(0)));
         } catch (Exception e) {
             fail(e.getMessage());
@@ -192,7 +197,7 @@ public class RnsResolverTest {
     public void testShouldResolveName() {
         try {
             String result = resolver.getAddress(NAME).toString();
-            assertEquals(ACCOUNTS.get(0), "0x"+result);
+            assertEquals(ACCOUNTS.get(0), result);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -202,7 +207,7 @@ public class RnsResolverTest {
     public void testDifferentResolverPublicResolver() {
         try {
             String result = resolver.getAddress(NAME_FOR_ANOTHER_RESOLVER).toString();
-            assertEquals(ACCOUNTS.get(2), "0x"+result);
+            assertEquals(ACCOUNTS.get(2), result);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -222,7 +227,7 @@ public class RnsResolverTest {
     public void testShouldntResolveName() {
         try {
             String result = resolver.getAddress("foo").toString();
-            assertEquals("0x0000000000000000000000000000000000000000", "0x"+result);
+            assertEquals("0x0000000000000000000000000000000000000000", result);
         } catch (Exception e) {
             fail(e.getMessage());
         }
