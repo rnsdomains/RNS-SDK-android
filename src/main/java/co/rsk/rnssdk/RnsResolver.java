@@ -3,7 +3,6 @@ package co.rsk.rnssdk;
 import android.support.annotation.VisibleForTesting;
 
 import org.bouncycastle.util.encoders.Hex;
-import org.web3j.compat.Compat;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.ens.NameHash;
 import org.web3j.protocol.Web3j;
@@ -28,7 +27,7 @@ public class RnsResolver {
 
     private final Web3j web3;
     private final RNS rns;
-    private String publicResolverAddress;
+    private String defaultResolver;
     public final static String EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000";
 
     //The default resolver is to MainNet
@@ -40,9 +39,9 @@ public class RnsResolver {
         this(Web3j.build(new HttpService(nodeDir)), publicResolverAddress, rnsAddress);
     }
 
-    public RnsResolver(Web3j web3, String publicResolverAddress, String rnsAddress) {
+    public RnsResolver(Web3j web3, String defaultResolver, String rnsAddress) {
         this.web3 = web3;
-        this.publicResolverAddress = publicResolverAddress;
+        this.defaultResolver = defaultResolver;
         ClientTransactionManager transactionManager = new ClientTransactionManager(web3,null);
         this.rns = RNS.load(
                 rnsAddress,
@@ -130,9 +129,9 @@ public class RnsResolver {
 
             try {
                 resolverAddress = rns.resolver(NameHash.nameHashAsBytes(node)).send();
-                resolverAddress = resolverAddress.equals(EMPTY_ADDRESS)?publicResolverAddress:resolverAddress;
+                resolverAddress = resolverAddress.equals(EMPTY_ADDRESS)? this.defaultResolver :resolverAddress;
             } catch (Exception e) {
-                resolverAddress = publicResolverAddress;
+                resolverAddress = this.defaultResolver;
             }
 
             AbstractResolver resolver = AbstractResolver.load(

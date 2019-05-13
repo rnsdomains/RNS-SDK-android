@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import co.rsk.commons.FastByteComparisons;
+import co.rsk.rnssdk.contracts.MultiChainResolver;
 import co.rsk.rnssdk.contracts.PublicResolver;
 import co.rsk.rnssdk.contracts.RNS;
 
@@ -33,17 +34,28 @@ import static org.junit.Assert.*;
  */
 public class RnsResolverTest {
 
-    private String rnsAddress = null;
-
     private static final long GAS_LIMIT = 6721975l;
     private static final byte[] HASH = Hex.decode("89ad40fcd44690fb5aa90e0fa51637c1b2d388f8056d68430d41c8284a6a7d5e");
-    public static final String NAME = "foo.rsk";
-    public static final String NAME_FOR_ANOTHER_RESOLVER = "foo.rif";
+    private static final byte[] TEST_CHAIN_ID = Hex.decode("12345678"); // TEST_CHAIN_ID
+    private static final String RSK_TLD = "rsk";
+    private static final String RIF_TLD = "rif";
+    private static final String MULTI_TLD = "foo.multi";
+    private static final String FOO = "foo";
 
 
     private List<String> ACCOUNTS = new ArrayList<>();
     private byte[] BYTES_FOR_TEST = new byte[32];
     private RnsResolver resolver;
+    private RnsResolver multiChainResolver;
+
+    //Test helpers
+    private String fooName(String tld) {
+        return FOO + "." + tld;
+    }
+
+    private void setSubowner(String rnsAddress, String tld, String fromAccount) {
+        byte[] tldHash = Hash.sha3(tld.getBytes(Compat.UTF_8));
+    }
 
     @Before
     public void setUp() {
@@ -70,6 +82,7 @@ public class RnsResolverTest {
             RNS rnsContractFrom2;
             PublicResolver resolverContract;
             PublicResolver anotherResolverContract;
+            MultiChainResolver multiChainResolverContract;
                 rnsContract = RNS.deploy(web3,
                         transactionManagerFrom0,
                         BigInteger.valueOf(1000000l),
@@ -93,24 +106,49 @@ public class RnsResolverTest {
                         BigInteger.valueOf(1000000l),
                         BigInteger.valueOf(GAS_LIMIT),
                         rnsContract.getContractAddress()).send();
-            byte[] rskHash = Hash.sha3("rsk".getBytes(Compat.UTF_8));
-            byte[] rifHash = Hash.sha3("rif".getBytes(Compat.UTF_8));
-            byte[] fooHash = Hash.sha3("foo".getBytes(Compat.UTF_8));
-            byte[] nodeFooDotRsk = NameHash.nameHashAsBytes(NAME);
-            byte[] nodeForAnotherResolver = NameHash.nameHashAsBytes(NAME_FOR_ANOTHER_RESOLVER);
+
+                multiChainResolverContract = MultiChainResolver.deploy(
+                        web3,
+                        transactionManagerFrom0,
+                        BigInteger.valueOf(1000000l),
+                        BigInteger.valueOf(GAS_LIMIT),
+                        rnsContract.getContractAddress(),
+                        resolverContract.getContractAddress()).send();
+            //TLD definition
+            byte[] rskHash = Hash.sha3(RSK_TLD.getBytes(Compat.UTF_8));
+            byte[] rifHash = Hash.sha3(RIF_TLD.getBytes(Compat.UTF_8));
+            byte[] multiHash = Hash.sha3("multi".getBytes(Compat.UTF_8));
+
+            byte[] fooHash = Hash.sha3(FOO.getBytes(Compat.UTF_8));
+            byte[] nodeFooDotRsk = NameHash.nameHashAsBytes(fooName(RSK_TLD));
+            byte[] nodeForAnotherResolver = NameHash.nameHashAsBytes(fooName(RIF_TLD));
+            byte[] nodeForMultiResolver = NameHash.nameHashAsBytes(MULTI_TLD);
+
+            String rnsAddress = rnsContract.getContractAddress();
             String resolverAddress = resolverContract.getContractAddress();
-            rnsAddress = rnsContract.getContractAddress();
+            String multiChainResolverContractContractAddress = multiChainResolverContract.getContractAddress();
+
+
             rnsContract.setSubnodeOwner(new byte[32], rskHash, ACCOUNTS.get(0)).send();
             rnsContract.setSubnodeOwner(new byte[32], rifHash, ACCOUNTS.get(0)).send();
+            rnsContract.setSubnodeOwner(new byte[32], multiHash, ACCOUNTS.get(0)).send();
+
             rnsContract.setSubnodeOwner(NameHash.nameHashAsBytes("rsk"), fooHash, ACCOUNTS.get(0)).send();
             rnsContract.setSubnodeOwner(NameHash.nameHashAsBytes("rif"), fooHash, ACCOUNTS.get(2)).send();
             rnsContract.setResolver(nodeFooDotRsk, resolverAddress).send();
+
             rnsContractFrom2.setResolver(nodeForAnotherResolver, anotherResolverContract.getContractAddress()).send();
+            //rnsContract.setResolver(nodeForMultiResolver, multiChainResolverContractContractAddress).send();
+
             anotherResolverContract.setAddr(nodeForAnotherResolver, ACCOUNTS.get(2)).send();
             resolverContract.setAddr(nodeFooDotRsk, ACCOUNTS.get(0)).send();
             assertEquals(resolverContract.addr(nodeFooDotRsk).send(), ACCOUNTS.get(0));
             resolverContract.setContent(nodeFooDotRsk, BYTES_FOR_TEST).send();
             resolver = new RnsResolver(web3, resolverAddress, rnsAddress);
+            multiChainResolver = new RnsResolver(web3, multiChainResolverContractContractAddress, rnsAddress);
+            //multiChainResolverContract.setChainAddr(nodeForMultiResolver, TEST_CHAIN_ID, ACCOUNTS.get(2)).send();
+            //multiChainResolverContract.setChainAddr(nodeForMultiResolver, RnsResolver.RSK_CHAIN_ID, ACCOUNTS.get(0)).send();
+
             assertTrue("rns contract is not valid", rnsContract.isValid());
             assertTrue("resolver contract is not valid", resolverContract.isValid());
         } catch (IOException e) {
@@ -122,8 +160,18 @@ public class RnsResolverTest {
     }
 
     @Test
-    public void testShit() {
+    public void testMultiCripto() {
         //0x99a12be4c89cbf6cfd11d1f2c029904a7b644368
+        try {
+            String expectedAccount = ACCOUNTS.get(0);
+            String account = multiChainResolver.getAddress(MULTI_TLD);
+            assertEquals("The first call should be from the PublicResolver", expectedAccount, account);
+            expectedAccount = ACCOUNTS.get(2);
+            account = multiChainResolver.getAddress(MULTI_TLD, TEST_CHAIN_ID);
+            assertEquals("The second call we specified chainId, so it should be another", expectedAccount, account);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
 
     }
 
@@ -131,8 +179,9 @@ public class RnsResolverTest {
     public void testSetAddress() {
         try {
             String expectedAccount = ACCOUNTS.get(1);
-            assertTrue(resolver.setAddress(NAME, expectedAccount, ACCOUNTS.get(0)));
-            String address = resolver.getAddress(NAME).toString();
+            String name = fooName(RSK_TLD);
+            assertTrue(resolver.setAddress(name, expectedAccount, ACCOUNTS.get(0)));
+            String address = resolver.getAddress(name);
             assertEquals(expectedAccount, address);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -143,7 +192,7 @@ public class RnsResolverTest {
     public void testSetNotOwnedAddress() {
         try {
             String expectedAccount = ACCOUNTS.get(1);
-            assertTrue(resolver.setAddress(NAME, expectedAccount, ACCOUNTS.get(0)));
+            assertTrue(resolver.setAddress(fooName(RSK_TLD), expectedAccount, ACCOUNTS.get(0)));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -152,8 +201,9 @@ public class RnsResolverTest {
     @Test
     public void testSetContent() {
         try {
-            resolver.setContent(NAME, HASH, ACCOUNTS.get(0));
-            byte[] result = resolver.content(NAME);
+            String name = fooName(RSK_TLD);
+            resolver.setContent(name, HASH, ACCOUNTS.get(0));
+            byte[] result = resolver.content(name);
             assertTrue(FastByteComparisons.equalBytes(result, HASH));
         } catch (Exception e) {
             fail(e.getMessage());
@@ -163,7 +213,7 @@ public class RnsResolverTest {
     @Test
     public void testSetContentToNotOwnedAddress() {
         try {
-            resolver.setContent(NAME, HASH, ACCOUNTS.get(1));
+            resolver.setContent(fooName(RSK_TLD), HASH, ACCOUNTS.get(1));
             fail("An exception should rise");
         } catch (Exception e) {
             String msg = "VM Exception while processing transaction: revert";
@@ -176,7 +226,7 @@ public class RnsResolverTest {
     @Test
     public void testImplementHasWithAddr() {
         try {
-            boolean result = resolver.has(NAME, "addr");
+            boolean result = resolver.has(fooName(RSK_TLD), "addr");
             assertTrue(result);
         } catch (Exception e) {
 
@@ -186,7 +236,7 @@ public class RnsResolverTest {
     @Test
     public void testFunctionNotImplementedHas() {
         try {
-            boolean result = resolver.has(NAME, "Kboom");
+            boolean result = resolver.has(fooName(RSK_TLD), "Kboom");
             assertFalse(result);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -196,7 +246,7 @@ public class RnsResolverTest {
     @Test
     public void testShouldResolveName() {
         try {
-            String result = resolver.getAddress(NAME).toString();
+            String result = resolver.getAddress(fooName(RSK_TLD)).toString();
             assertEquals(ACCOUNTS.get(0), result);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -206,7 +256,7 @@ public class RnsResolverTest {
     @Test
     public void testDifferentResolverPublicResolver() {
         try {
-            String result = resolver.getAddress(NAME_FOR_ANOTHER_RESOLVER).toString();
+            String result = resolver.getAddress(fooName(RIF_TLD));
             assertEquals(ACCOUNTS.get(2), result);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -216,7 +266,7 @@ public class RnsResolverTest {
     @Test
     public void testShouldResolveContent() {
         try {
-            byte[] result = resolver.content(NAME);
+            byte[] result = resolver.content(fooName(RSK_TLD));
             assertTrue(FastByteComparisons.equalBytes(result, BYTES_FOR_TEST));
         } catch (Exception e) {
             fail(e.getMessage());
@@ -226,7 +276,7 @@ public class RnsResolverTest {
     @Test
     public void testShouldntResolveName() {
         try {
-            String result = resolver.getAddress("foo").toString();
+            String result = resolver.getAddress("foo");
             assertEquals("0x0000000000000000000000000000000000000000", result);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -236,8 +286,9 @@ public class RnsResolverTest {
     @Test
     public void testShouldImplementSupportsInterface() {
         try {
-            assertTrue(resolver.supportsInterface(NAME,"3b3b57de") &&
-                    resolver.supportsInterface(NAME,"d8389dc5"));
+            String name = fooName(RSK_TLD);
+            assertTrue(resolver.supportsInterface(name,"3b3b57de") &&
+                    resolver.supportsInterface(name,"d8389dc5"));
         } catch (Exception e) {
             fail(e.getMessage());
         }
