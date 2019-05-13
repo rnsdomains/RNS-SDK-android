@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.2;
 
-import './AbstractRNS.sol';
+import "./AbstractRNS.sol";
 
 /**
  * The RNS registry contract.
@@ -93,5 +93,13 @@ contract RNS is AbstractRNS {
     function setTTL(bytes32 node, uint64 ttlValue) public only_owner(node) {
         emit NewTTL(node, ttlValue);
         records[node].ttl = ttlValue;
+    }
+
+    /**
+     * Sets the default resolver for new nodes
+     * @param _resolver The address of the new defaultResolver
+     */
+    function setDefaultResolver(address _resolver) public only_owner(0) {
+        records[bytes32(0)].resolver = _resolver;
     }
 }

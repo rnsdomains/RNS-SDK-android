@@ -1,16 +1,17 @@
 package co.rsk.rnssdk.contracts;
 
 import io.reactivex.Flowable;
+import io.reactivex.functions.Function;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Event;
-import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.abi.datatypes.generated.Uint64;
@@ -32,24 +33,24 @@ import org.web3j.tx.gas.ContractGasProvider;
  * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the 
  * <a href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
- * <p>Generated with web3j version 4.1.1.
+ * <p>Generated with web3j version 4.3.0.
  */
 public class AbstractRNS extends Contract {
-    private static final String BINARY = "";
-
-    public static final String FUNC_RESOLVER = "resolver";
+    private static final String BINARY = "0x";
 
     public static final String FUNC_OWNER = "owner";
 
-    public static final String FUNC_SETSUBNODEOWNER = "setSubnodeOwner";
-
-    public static final String FUNC_SETTTL = "setTTL";
+    public static final String FUNC_RESOLVER = "resolver";
 
     public static final String FUNC_TTL = "ttl";
 
+    public static final String FUNC_SETOWNER = "setOwner";
+
+    public static final String FUNC_SETSUBNODEOWNER = "setSubnodeOwner";
+
     public static final String FUNC_SETRESOLVER = "setResolver";
 
-    public static final String FUNC_SETOWNER = "setOwner";
+    public static final String FUNC_SETTTL = "setTTL";
 
     public static final Event NEWOWNER_EVENT = new Event("NewOwner", 
             Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>(true) {}, new TypeReference<Bytes32>(true) {}, new TypeReference<Address>() {}));
@@ -66,6 +67,12 @@ public class AbstractRNS extends Contract {
     public static final Event NEWTTL_EVENT = new Event("NewTTL", 
             Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>(true) {}, new TypeReference<Uint64>() {}));
     ;
+
+    protected static final HashMap<String, String> _addresses;
+
+    static {
+        _addresses = new HashMap<String, String>();
+    }
 
     @Deprecated
     protected AbstractRNS(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
@@ -85,64 +92,6 @@ public class AbstractRNS extends Contract {
         super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
     }
 
-    public RemoteCall<String> resolver(byte[] node) {
-        final Function function = new Function(FUNC_RESOLVER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
-        return executeRemoteCallSingleValueReturn(function, String.class);
-    }
-
-    public RemoteCall<String> owner(byte[] node) {
-        final Function function = new Function(FUNC_OWNER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
-        return executeRemoteCallSingleValueReturn(function, String.class);
-    }
-
-    public RemoteCall<TransactionReceipt> setSubnodeOwner(byte[] node, byte[] label, String ownerAddress) {
-        final Function function = new Function(
-                FUNC_SETSUBNODEOWNER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
-                new org.web3j.abi.datatypes.generated.Bytes32(label), 
-                new org.web3j.abi.datatypes.Address(ownerAddress)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
-    public RemoteCall<TransactionReceipt> setTTL(byte[] node, BigInteger ttlValue) {
-        final Function function = new Function(
-                FUNC_SETTTL, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
-                new org.web3j.abi.datatypes.generated.Uint64(ttlValue)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
-    public RemoteCall<BigInteger> ttl(byte[] node) {
-        final Function function = new Function(FUNC_TTL, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint64>() {}));
-        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-    }
-
-    public RemoteCall<TransactionReceipt> setResolver(byte[] node, String resolverAddress) {
-        final Function function = new Function(
-                FUNC_SETRESOLVER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
-                new org.web3j.abi.datatypes.Address(resolverAddress)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
-    public RemoteCall<TransactionReceipt> setOwner(byte[] node, String ownerAddress) {
-        final Function function = new Function(
-                FUNC_SETOWNER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
-                new org.web3j.abi.datatypes.Address(ownerAddress)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
     public List<NewOwnerEventResponse> getNewOwnerEvents(TransactionReceipt transactionReceipt) {
         List<Contract.EventValuesWithLog> valueList = extractEventParametersWithLog(NEWOWNER_EVENT, transactionReceipt);
         ArrayList<NewOwnerEventResponse> responses = new ArrayList<NewOwnerEventResponse>(valueList.size());
@@ -158,7 +107,7 @@ public class AbstractRNS extends Contract {
     }
 
     public Flowable<NewOwnerEventResponse> newOwnerEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, NewOwnerEventResponse>() {
+        return web3j.ethLogFlowable(filter).map(new Function<Log, NewOwnerEventResponse>() {
             @Override
             public NewOwnerEventResponse apply(Log log) {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(NEWOWNER_EVENT, log);
@@ -192,7 +141,7 @@ public class AbstractRNS extends Contract {
     }
 
     public Flowable<TransferEventResponse> transferEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, TransferEventResponse>() {
+        return web3j.ethLogFlowable(filter).map(new Function<Log, TransferEventResponse>() {
             @Override
             public TransferEventResponse apply(Log log) {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(TRANSFER_EVENT, log);
@@ -225,7 +174,7 @@ public class AbstractRNS extends Contract {
     }
 
     public Flowable<NewResolverEventResponse> newResolverEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, NewResolverEventResponse>() {
+        return web3j.ethLogFlowable(filter).map(new Function<Log, NewResolverEventResponse>() {
             @Override
             public NewResolverEventResponse apply(Log log) {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(NEWRESOLVER_EVENT, log);
@@ -258,7 +207,7 @@ public class AbstractRNS extends Contract {
     }
 
     public Flowable<NewTTLEventResponse> newTTLEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, NewTTLEventResponse>() {
+        return web3j.ethLogFlowable(filter).map(new Function<Log, NewTTLEventResponse>() {
             @Override
             public NewTTLEventResponse apply(Log log) {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(NEWTTL_EVENT, log);
@@ -275,6 +224,64 @@ public class AbstractRNS extends Contract {
         EthFilter filter = new EthFilter(startBlock, endBlock, getContractAddress());
         filter.addSingleTopic(EventEncoder.encode(NEWTTL_EVENT));
         return newTTLEventFlowable(filter);
+    }
+
+    public RemoteCall<String> owner(byte[] node) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(FUNC_OWNER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+        return executeRemoteCallSingleValueReturn(function, String.class);
+    }
+
+    public RemoteCall<String> resolver(byte[] node) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(FUNC_RESOLVER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+        return executeRemoteCallSingleValueReturn(function, String.class);
+    }
+
+    public RemoteCall<BigInteger> ttl(byte[] node) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(FUNC_TTL, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Uint64>() {}));
+        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+    }
+
+    public RemoteCall<TransactionReceipt> setOwner(byte[] node, String ownerAddress) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETOWNER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
+                new org.web3j.abi.datatypes.Address(ownerAddress)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteCall<TransactionReceipt> setSubnodeOwner(byte[] node, byte[] label, String ownerAddress) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETSUBNODEOWNER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
+                new org.web3j.abi.datatypes.generated.Bytes32(label), 
+                new org.web3j.abi.datatypes.Address(ownerAddress)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteCall<TransactionReceipt> setResolver(byte[] node, String resolverAddress) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETRESOLVER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
+                new org.web3j.abi.datatypes.Address(resolverAddress)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteCall<TransactionReceipt> setTTL(byte[] node, BigInteger ttlValue) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETTTL, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
+                new org.web3j.abi.datatypes.generated.Uint64(ttlValue)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
     }
 
     @Deprecated
@@ -311,6 +318,14 @@ public class AbstractRNS extends Contract {
     @Deprecated
     public static RemoteCall<AbstractRNS> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
         return deployRemoteCall(AbstractRNS.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
+    }
+
+    protected String getStaticDeployedAddress(String networkId) {
+        return _addresses.get(networkId);
+    }
+
+    public static String getPreviouslyDeployedAddress(String networkId) {
+        return _addresses.get(networkId);
     }
 
     public static class NewOwnerEventResponse {

@@ -1,16 +1,17 @@
 package co.rsk.rnssdk.contracts;
 
 import io.reactivex.Flowable;
+import io.reactivex.functions.Function;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Event;
-import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.abi.datatypes.generated.Uint64;
@@ -32,24 +33,26 @@ import org.web3j.tx.gas.ContractGasProvider;
  * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the 
  * <a href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
- * <p>Generated with web3j version 4.1.1.
+ * <p>Generated with web3j version 4.3.0.
  */
 public class RNS extends Contract {
-    private static final String BINARY = "608060405234801561001057600080fd5b5060008080526020527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb58054600160a060020a031916331790556105e8806100596000396000f3006080604052600436106100825763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416630178b8bf811461008757806302571be3146100bb57806306ab5923146100d357806314ab9038146100fc57806316a25cbd146101215780631896f70a146101565780635b0fc9c31461017a575b600080fd5b34801561009357600080fd5b5061009f60043561019e565b60408051600160a060020a039092168252519081900360200190f35b3480156100c757600080fd5b5061009f6004356101bc565b3480156100df57600080fd5b506100fa600435602435600160a060020a03604435166101d7565b005b34801561010857600080fd5b506100fa60043567ffffffffffffffff60243516610379565b34801561012d57600080fd5b50610139600435610442565b6040805167ffffffffffffffff9092168252519081900360200190f35b34801561016257600080fd5b506100fa600435600160a060020a0360243516610479565b34801561018657600080fd5b506100fa600435600160a060020a036024351661051c565b600090815260208190526040902060010154600160a060020a031690565b600090815260208190526040902054600160a060020a031690565b6000838152602081905260408120548490600160a060020a031633146101fc57600080fd5b604080516020808201889052818301879052825180830384018152606090920192839052815191929182918401908083835b6020831061024d5780518252601f19909201916020918201910161022e565b51815160209384036101000a600019018019909216911617905260408051929094018290038220600160a060020a038a16835293519397508995508a94507fce0457fe73731f824cc272376169235128c118b49d344817417c6d108d155e829391829003019150a3600082815260208181526040808320805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a038881169190911790915588845292819020600101548151931683525184927f335721b01866dc23fbee8b6b2c7b1e14d6f05c28cd35a2c934239f94095602a092908290030190a2506000938452602084905260408085206001908101549286529420909301805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a03909416939093179092555050565b6000828152602081905260409020548290600160a060020a0316331461039e57600080fd5b6040805167ffffffffffffffff84168152905184917f1d4f9bbfc9cab89d66e1a1562f2233ccbf1308cb4f63de2ead5787adddb8fa68919081900360200190a250600091825260208290526040909120600101805467ffffffffffffffff90921674010000000000000000000000000000000000000000027fffffffff0000000000000000ffffffffffffffffffffffffffffffffffffffff909216919091179055565b60009081526020819052604090206001015474010000000000000000000000000000000000000000900467ffffffffffffffff1690565b6000828152602081905260409020548290600160a060020a0316331461049e57600080fd5b60408051600160a060020a0384168152905184917f335721b01866dc23fbee8b6b2c7b1e14d6f05c28cd35a2c934239f94095602a0919081900360200190a250600091825260208290526040909120600101805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a03909216919091179055565b6000828152602081905260409020548290600160a060020a0316331461054157600080fd5b60408051600160a060020a0384168152905184917fd4735d920b0f87494915f556dd9b54c8f309026070caea5c737245152564d266919081900360200190a250600091825260208290526040909120805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a039092169190911790555600a165627a7a7230582083e9a6f823a194b6cc4f754f9750941f2e3b220e91faaebe82e71e3f8d45481f0029";
-
-    public static final String FUNC_RESOLVER = "resolver";
+    private static final String BINARY = "0x608060405234801561001057600080fd5b50336000808060001b815260200190815260200160002060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610ab6806100776000396000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c806316a25cbd1161005b57806316a25cbd146102035780631896f70a146102595780635b0fc9c3146102a7578063c66485b2146102f557610088565b80630178b8bf1461008d57806302571be3146100fb57806306ab59231461016957806314ab9038146101c1575b600080fd5b6100b9600480360360208110156100a357600080fd5b8101908080359060200190929190505050610339565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101276004803603602081101561011157600080fd5b8101908080359060200190929190505050610378565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101bf6004803603606081101561017f57600080fd5b810190808035906020019092919080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506103b7565b005b610201600480360360408110156101d757600080fd5b8101908080359060200190929190803567ffffffffffffffff16906020019092919050505061063a565b005b61022f6004803603602081101561021957600080fd5b8101908080359060200190929190505050610735565b604051808267ffffffffffffffff1667ffffffffffffffff16815260200191505060405180910390f35b6102a56004803603604081101561026f57600080fd5b8101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610768565b005b6102f3600480360360408110156102bd57600080fd5b8101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610893565b005b6103376004803603602081101561030b57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506109be565b005b600080600083815260200190815260200160002060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050919050565b600080600083815260200190815260200160002060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050919050565b823373ffffffffffffffffffffffffffffffffffffffff1660008083815260200190815260200160002060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff161461042557600080fd5b60008484604051602001808381526020018281526020019250505060405160208183030381529060405280519060200120905083857fce0457fe73731f824cc272376169235128c118b49d344817417c6d108d155e8285604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390a38260008083815260200190815260200160002060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550807f335721b01866dc23fbee8b6b2c7b1e14d6f05c28cd35a2c934239f94095602a060008088815260200190815260200160002060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390a260008086815260200190815260200160002060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1660008083815260200190815260200160002060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505050505050565b813373ffffffffffffffffffffffffffffffffffffffff1660008083815260200190815260200160002060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16146106a857600080fd5b827f1d4f9bbfc9cab89d66e1a1562f2233ccbf1308cb4f63de2ead5787adddb8fa6883604051808267ffffffffffffffff1667ffffffffffffffff16815260200191505060405180910390a28160008085815260200190815260200160002060010160146101000a81548167ffffffffffffffff021916908367ffffffffffffffff160217905550505050565b600080600083815260200190815260200160002060010160149054906101000a900467ffffffffffffffff169050919050565b813373ffffffffffffffffffffffffffffffffffffffff1660008083815260200190815260200160002060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16146107d657600080fd5b827f335721b01866dc23fbee8b6b2c7b1e14d6f05c28cd35a2c934239f94095602a083604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390a28160008085815260200190815260200160002060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550505050565b813373ffffffffffffffffffffffffffffffffffffffff1660008083815260200190815260200160002060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff161461090157600080fd5b827fd4735d920b0f87494915f556dd9b54c8f309026070caea5c737245152564d26683604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390a28160008085815260200190815260200160002060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550505050565b6000801b3373ffffffffffffffffffffffffffffffffffffffff1660008083815260200190815260200160002060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1614610a2f57600080fd5b816000808060001b815260200190815260200160002060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550505056fea165627a7a72305820cbaeeba4d598396e96315e318da70ed3f98c4ce056a0863b87137db51184c2320029";
 
     public static final String FUNC_OWNER = "owner";
 
-    public static final String FUNC_SETSUBNODEOWNER = "setSubnodeOwner";
-
-    public static final String FUNC_SETTTL = "setTTL";
+    public static final String FUNC_RESOLVER = "resolver";
 
     public static final String FUNC_TTL = "ttl";
 
+    public static final String FUNC_SETOWNER = "setOwner";
+
+    public static final String FUNC_SETSUBNODEOWNER = "setSubnodeOwner";
+
     public static final String FUNC_SETRESOLVER = "setResolver";
 
-    public static final String FUNC_SETOWNER = "setOwner";
+    public static final String FUNC_SETTTL = "setTTL";
+
+    public static final String FUNC_SETDEFAULTRESOLVER = "setDefaultResolver";
 
     public static final Event NEWOWNER_EVENT = new Event("NewOwner", 
             Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>(true) {}, new TypeReference<Bytes32>(true) {}, new TypeReference<Address>() {}));
@@ -66,6 +69,12 @@ public class RNS extends Contract {
     public static final Event NEWTTL_EVENT = new Event("NewTTL", 
             Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>(true) {}, new TypeReference<Uint64>() {}));
     ;
+
+    protected static final HashMap<String, String> _addresses;
+
+    static {
+        _addresses = new HashMap<String, String>();
+    }
 
     @Deprecated
     protected RNS(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
@@ -85,64 +94,6 @@ public class RNS extends Contract {
         super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
     }
 
-    public RemoteCall<String> resolver(byte[] node) {
-        final Function function = new Function(FUNC_RESOLVER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
-        return executeRemoteCallSingleValueReturn(function, String.class);
-    }
-
-    public RemoteCall<String> owner(byte[] node) {
-        final Function function = new Function(FUNC_OWNER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
-        return executeRemoteCallSingleValueReturn(function, String.class);
-    }
-
-    public RemoteCall<TransactionReceipt> setSubnodeOwner(byte[] node, byte[] label, String ownerAddress) {
-        final Function function = new Function(
-                FUNC_SETSUBNODEOWNER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
-                new org.web3j.abi.datatypes.generated.Bytes32(label), 
-                new org.web3j.abi.datatypes.Address(ownerAddress)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
-    public RemoteCall<TransactionReceipt> setTTL(byte[] node, BigInteger ttlValue) {
-        final Function function = new Function(
-                FUNC_SETTTL, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
-                new org.web3j.abi.datatypes.generated.Uint64(ttlValue)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
-    public RemoteCall<BigInteger> ttl(byte[] node) {
-        final Function function = new Function(FUNC_TTL, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint64>() {}));
-        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-    }
-
-    public RemoteCall<TransactionReceipt> setResolver(byte[] node, String resolverAddress) {
-        final Function function = new Function(
-                FUNC_SETRESOLVER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
-                new org.web3j.abi.datatypes.Address(resolverAddress)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
-    public RemoteCall<TransactionReceipt> setOwner(byte[] node, String ownerAddress) {
-        final Function function = new Function(
-                FUNC_SETOWNER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
-                new org.web3j.abi.datatypes.Address(ownerAddress)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
     public List<NewOwnerEventResponse> getNewOwnerEvents(TransactionReceipt transactionReceipt) {
         List<Contract.EventValuesWithLog> valueList = extractEventParametersWithLog(NEWOWNER_EVENT, transactionReceipt);
         ArrayList<NewOwnerEventResponse> responses = new ArrayList<NewOwnerEventResponse>(valueList.size());
@@ -158,7 +109,7 @@ public class RNS extends Contract {
     }
 
     public Flowable<NewOwnerEventResponse> newOwnerEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, NewOwnerEventResponse>() {
+        return web3j.ethLogFlowable(filter).map(new Function<Log, NewOwnerEventResponse>() {
             @Override
             public NewOwnerEventResponse apply(Log log) {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(NEWOWNER_EVENT, log);
@@ -192,7 +143,7 @@ public class RNS extends Contract {
     }
 
     public Flowable<TransferEventResponse> transferEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, TransferEventResponse>() {
+        return web3j.ethLogFlowable(filter).map(new Function<Log, TransferEventResponse>() {
             @Override
             public TransferEventResponse apply(Log log) {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(TRANSFER_EVENT, log);
@@ -225,7 +176,7 @@ public class RNS extends Contract {
     }
 
     public Flowable<NewResolverEventResponse> newResolverEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, NewResolverEventResponse>() {
+        return web3j.ethLogFlowable(filter).map(new Function<Log, NewResolverEventResponse>() {
             @Override
             public NewResolverEventResponse apply(Log log) {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(NEWRESOLVER_EVENT, log);
@@ -258,7 +209,7 @@ public class RNS extends Contract {
     }
 
     public Flowable<NewTTLEventResponse> newTTLEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, NewTTLEventResponse>() {
+        return web3j.ethLogFlowable(filter).map(new Function<Log, NewTTLEventResponse>() {
             @Override
             public NewTTLEventResponse apply(Log log) {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(NEWTTL_EVENT, log);
@@ -277,6 +228,72 @@ public class RNS extends Contract {
         return newTTLEventFlowable(filter);
     }
 
+    public RemoteCall<String> owner(byte[] node) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(FUNC_OWNER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+        return executeRemoteCallSingleValueReturn(function, String.class);
+    }
+
+    public RemoteCall<String> resolver(byte[] node) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(FUNC_RESOLVER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+        return executeRemoteCallSingleValueReturn(function, String.class);
+    }
+
+    public RemoteCall<BigInteger> ttl(byte[] node) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(FUNC_TTL, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node)), 
+                Arrays.<TypeReference<?>>asList(new TypeReference<Uint64>() {}));
+        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+    }
+
+    public RemoteCall<TransactionReceipt> setOwner(byte[] node, String ownerAddress) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETOWNER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
+                new org.web3j.abi.datatypes.Address(ownerAddress)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteCall<TransactionReceipt> setSubnodeOwner(byte[] node, byte[] label, String ownerAddress) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETSUBNODEOWNER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
+                new org.web3j.abi.datatypes.generated.Bytes32(label), 
+                new org.web3j.abi.datatypes.Address(ownerAddress)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteCall<TransactionReceipt> setResolver(byte[] node, String resolverAddress) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETRESOLVER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
+                new org.web3j.abi.datatypes.Address(resolverAddress)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteCall<TransactionReceipt> setTTL(byte[] node, BigInteger ttlValue) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETTTL, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(node), 
+                new org.web3j.abi.datatypes.generated.Uint64(ttlValue)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
+    public RemoteCall<TransactionReceipt> setDefaultResolver(String _resolver) {
+        final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
+                FUNC_SETDEFAULTRESOLVER, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(_resolver)), 
+                Collections.<TypeReference<?>>emptyList());
+        return executeRemoteCallTransaction(function);
+    }
+
     @Deprecated
     public static RNS load(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
         return new RNS(contractAddress, web3j, credentials, gasPrice, gasLimit);
@@ -291,10 +308,7 @@ public class RNS extends Contract {
         return new RNS(contractAddress, web3j, credentials, contractGasProvider);
     }
 
-    public static RNS load(String contractAddress,
-                           Web3j web3j,
-                           TransactionManager transactionManager,
-                           ContractGasProvider contractGasProvider) {
+    public static RNS load(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
         return new RNS(contractAddress, web3j, transactionManager, contractGasProvider);
     }
 
@@ -314,6 +328,14 @@ public class RNS extends Contract {
     @Deprecated
     public static RemoteCall<RNS> deploy(Web3j web3j, TransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
         return deployRemoteCall(RNS.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
+    }
+
+    protected String getStaticDeployedAddress(String networkId) {
+        return _addresses.get(networkId);
+    }
+
+    public static String getPreviouslyDeployedAddress(String networkId) {
+        return _addresses.get(networkId);
     }
 
     public static class NewOwnerEventResponse {

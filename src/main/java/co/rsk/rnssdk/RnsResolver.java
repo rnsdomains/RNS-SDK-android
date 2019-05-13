@@ -13,15 +13,21 @@ import org.web3j.tx.gas.DefaultGasProvider;
 import java.util.HashMap;
 import java.util.Map;
 
-import co.rsk.commons.RskAddress;
+import co.rsk.rnssdk.contracts.AbstractMultiChainResolver;
+import co.rsk.rnssdk.contracts.AbstractResolver;
 import co.rsk.rnssdk.contracts.RNS;
 import co.rsk.rnssdk.contracts.ResolverInterface;
 
 public class RnsResolver {
 
+    public static final byte[] CHAIN_ADDR_INTERFACE = Hex.decode("8be4b5f6");
+    public static final byte[] ADDR_INTERFACE = Hex.decode("3b3b57de");
+    public static final byte[] RSK_CHAIN_ID = Hex.decode("80000089");
+    public static final String OK_STATUS = "0x1";
+
     private final Web3j web3;
     private final RNS rns;
-    private String publicResolverAddress;
+    private String defaultResolver;
     public final static String EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000";
 
     //The default resolver is to MainNet
@@ -33,9 +39,9 @@ public class RnsResolver {
         this(Web3j.build(new HttpService(nodeDir)), publicResolverAddress, rnsAddress);
     }
 
-    public RnsResolver(Web3j web3, String publicResolverAddress, String rnsAddress) {
+    public RnsResolver(Web3j web3, String defaultResolver, String rnsAddress) {
         this.web3 = web3;
-        this.publicResolverAddress = publicResolverAddress;
+        this.defaultResolver = defaultResolver;
         ClientTransactionManager transactionManager = new ClientTransactionManager(web3,null);
         this.rns = RNS.load(
                 rnsAddress,
@@ -46,48 +52,99 @@ public class RnsResolver {
     }
 
     @VisibleForTesting
-    public ResolverInterface getResolver(String name, String from) {
+    public AbstractResolverResult getResolver(String name, String from) {
         return loadResolver(name, from);
     }
 
+    //Backwards compatibility
     public boolean setAddress(String name, String address, String from) throws Exception {
-        new RskAddress(address); //Check if it is a valid RSK address
-        ResolverInterface resolver = loadResolver(name, from);
-        return resolver.setAddr(NameHash.nameHashAsBytes(name), address).send().getStatus().equals("0x1");
+        return setAddress(name, address, from, RSK_CHAIN_ID);
     }
 
-    public RskAddress getAddress(String name) throws Exception {
-        if (isValidRnsName(name)) {
-            return new RskAddress(loadResolver(name,null).addr(NameHash.nameHashAsBytes(name)).send());
+    //TODO: refactor with strategy pattern
+    public boolean setAddress(String name, String address, String from, byte[] chainId) throws Exception {
+        AbstractResolverResult result = loadResolver(name, from);
+        if (chainId == null || chainId.length != 4) {
+            chainId = RSK_CHAIN_ID;
         }
-        return RskAddress.nullAddress();
+        byte[] node = NameHash.nameHashAsBytes(name);
+        if (result.getResolver().supportsInterface(CHAIN_ADDR_INTERFACE).send()) {
+            AbstractMultiChainResolver multi = AbstractMultiChainResolver.load(result.getResolverAddress(),
+                    web3,
+                    result.getClientTransactionManager(),
+                    DefaultGasProvider.GAS_PRICE,
+                    DefaultGasProvider.GAS_LIMIT);
+            return  multi.setChainAddr(node, chainId, address).send().getStatus().equals(OK_STATUS);
+        } else if (result.getResolver().supportsInterface(ADDR_INTERFACE).send()) {
+            ResolverInterface noMulti = ResolverInterface.load(result.getResolverAddress(),
+                    web3,
+                    result.getClientTransactionManager(),
+                    DefaultGasProvider.GAS_PRICE,
+                    DefaultGasProvider.GAS_LIMIT);
+            return noMulti.setAddr(node, address).send().getStatus().equals(OK_STATUS);
+        }
+        return false;
     }
 
-    Map<String, ResolverInterface> cache = new HashMap<>();
+    //backwards compatibility
+    public String getAddress(String name) throws Exception {
+        return getAddress(name, RSK_CHAIN_ID);
+    }
 
-    private ResolverInterface loadResolver(String node, String from) {
-        ResolverInterface resolver = cache.get(node+":"+from);
-        if (resolver == null) {
+    //TODO: refactor with strategy pattern
+    public String getAddress(String name, byte[] chainId) throws Exception {
+        if (isValidRnsName(name)) {
+            AbstractResolverResult result = loadResolver(name, null);
+            byte[] node = NameHash.nameHashAsBytes(name);
+            if (result.getResolver().supportsInterface(CHAIN_ADDR_INTERFACE).send()) {
+                AbstractMultiChainResolver multi = AbstractMultiChainResolver.load(result.getResolverAddress(),
+                        web3,
+                        result.getClientTransactionManager(),
+                        DefaultGasProvider.GAS_PRICE,
+                        DefaultGasProvider.GAS_LIMIT);
+                return multi.chainAddr(node, chainId).send();
+            } else if (result.getResolver().supportsInterface(ADDR_INTERFACE).send()) {
+                ResolverInterface noMulti = ResolverInterface.load(result.getResolverAddress(),
+                        web3,
+                        result.getClientTransactionManager(),
+                        DefaultGasProvider.GAS_PRICE,
+                        DefaultGasProvider.GAS_LIMIT);
+                return noMulti.addr(node).send();
+            }
+        }
+        return Hex.toHexString(new byte[0]);
+    }
+
+    Map<String, AbstractResolverResult> cache = new HashMap<>();
+
+    private AbstractResolverResult loadResolver(String node) {
+        return loadResolver(node, null);
+    }
+
+    private AbstractResolverResult loadResolver(String node, String from) {
+        AbstractResolverResult result = cache.get(node+":"+from);
+        String resolverAddress;
+        if (result == null) {
             ClientTransactionManager transactionManager = new ClientTransactionManager(web3,from);
 
-            String resolverAddress;
             try {
                 resolverAddress = rns.resolver(NameHash.nameHashAsBytes(node)).send();
-                resolverAddress = resolverAddress.equals(EMPTY_ADDRESS)?publicResolverAddress:resolverAddress;
+                resolverAddress = resolverAddress.equals(EMPTY_ADDRESS)? this.defaultResolver :resolverAddress;
             } catch (Exception e) {
-                resolverAddress = publicResolverAddress;
+                resolverAddress = this.defaultResolver;
             }
 
-            resolver = ResolverInterface.load(
+            AbstractResolver resolver = AbstractResolver.load(
                     resolverAddress,
                     web3,
                     transactionManager,
                     DefaultGasProvider.GAS_PRICE,
                     DefaultGasProvider.GAS_LIMIT);
-            cache.put(node+":"+from, resolver);
+            result = new AbstractResolverResult(resolver, resolverAddress, transactionManager);
+            cache.put(node+":"+from, result);
         }
 
-        return resolver;
+        return result;
     }
 
     private boolean isValidRnsName(String input) {
@@ -95,19 +152,47 @@ public class RnsResolver {
     }
 
     public void setContent(String name, byte[] hash, String from) throws Exception {
-        loadResolver(name, from).setContent(NameHash.nameHashAsBytes(name), hash).send();
+        AbstractResolverResult result = loadResolver(name, from);
+        ResolverInterface resolver = ResolverInterface.load(
+                result.getResolverAddress(),
+                web3,
+                result.getClientTransactionManager(),
+                DefaultGasProvider.GAS_PRICE,
+                DefaultGasProvider.GAS_LIMIT);
+        resolver.setContent(NameHash.nameHashAsBytes(name), hash).send();
     }
 
     public byte[] content(String name) throws Exception {
-        return loadResolver(name, null).content(NameHash.nameHashAsBytes(name)).send();
+        AbstractResolverResult result = loadResolver(name);
+        ResolverInterface resolver = ResolverInterface.load(
+                result.getResolverAddress(),
+                web3,
+                result.getClientTransactionManager(),
+                DefaultGasProvider.GAS_PRICE,
+                DefaultGasProvider.GAS_LIMIT);
+        return resolver.content(NameHash.nameHashAsBytes(name)).send();
     }
 
     public Boolean has(String name, String kind) throws Exception {
-        return loadResolver(name, null).has(NameHash.nameHashAsBytes(name), NameHash.nameHashAsBytes(kind)).send();
+        AbstractResolverResult result = loadResolver(name);
+        ResolverInterface resolver = ResolverInterface.load(
+                result.getResolverAddress(),
+                web3,
+                result.getClientTransactionManager(),
+                DefaultGasProvider.GAS_PRICE,
+                DefaultGasProvider.GAS_LIMIT);
+        return resolver.has(NameHash.nameHashAsBytes(name), NameHash.nameHashAsBytes(kind)).send();
     }
 
     public Boolean supportsInterface(String name, String interfaceID) throws Exception {
-        return loadResolver(name, null).supportsInterface(Hex.decode(interfaceID)).send();
+        AbstractResolverResult result = loadResolver(name);
+        ResolverInterface resolver = ResolverInterface.load(
+                result.getResolverAddress(),
+                web3,
+                result.getClientTransactionManager(),
+                DefaultGasProvider.GAS_PRICE,
+                DefaultGasProvider.GAS_LIMIT);
+        return resolver.supportsInterface(Hex.decode(interfaceID)).send();
     }
 
 }

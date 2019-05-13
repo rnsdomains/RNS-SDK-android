@@ -1,4 +1,4 @@
-pragma solidity ^0.5.6;
+pragma solidity ^0.5.2;
 
 contract AbstractRNS {
     function owner(bytes32 node) public view returns(address);
