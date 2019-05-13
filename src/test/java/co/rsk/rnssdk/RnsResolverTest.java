@@ -39,22 +39,27 @@ public class RnsResolverTest {
     private static final byte[] TEST_CHAIN_ID = Hex.decode("12345678"); // TEST_CHAIN_ID
     private static final String RSK_TLD = "rsk";
     private static final String RIF_TLD = "rif";
-    private static final String MULTI_TLD = "foo.multi";
+    private static final String MULTI_TLD = "multi";
     private static final String FOO = "foo";
 
 
-    private List<String> ACCOUNTS = new ArrayList<>();
     private byte[] BYTES_FOR_TEST = new byte[32];
     private RnsResolver resolver;
     private RnsResolver multiChainResolver;
+    private String mainAccountAddress;
+    private String alternateAccountAddress;
+    private String anotherAlternateAccountAddress;
 
     //Test helpers
     private String fooName(String tld) {
         return FOO + "." + tld;
     }
 
-    private void setSubowner(String rnsAddress, String tld, String fromAccount) {
+    private void setSubowner(RNS rns, String tld, String previousOwner, String subnodeOwner) throws Exception {
         byte[] tldHash = Hash.sha3(tld.getBytes(Compat.UTF_8));
+        byte[] fooHash = Hash.sha3(FOO.getBytes(Compat.UTF_8));
+        rns.setSubnodeOwner(new byte[32], tldHash, previousOwner).send();
+        rns.setSubnodeOwner(NameHash.nameHashAsBytes(tld), fooHash, subnodeOwner).send();
     }
 
     @Before
@@ -63,6 +68,7 @@ public class RnsResolverTest {
         //the HttpService constructor
 
         Web3jService httpService = new HttpService();
+        //Uncoment this line to conect to your regtest node from RSK
         //Web3jService httpService = new HttpService("http://localhost:4444/");
         Web3j web3 = Web3j.build(httpService);
         try {
@@ -71,85 +77,72 @@ public class RnsResolverTest {
             random.nextBytes(BYTES_FOR_TEST);
 
             EthAccounts ethAccounts = web3.ethAccounts().send();
-            ACCOUNTS = ethAccounts.getAccounts();
+            List<String> ACCOUNTS = ethAccounts.getAccounts();
             assertTrue(ACCOUNTS.size() >= 3);
             //here we define the FROM address for every transaction;
-            ClientTransactionManager transactionManagerFrom0 =
-                    new ClientTransactionManager(web3, ACCOUNTS.get(0));
-            ClientTransactionManager transactionManagerFrom2 =
-                    new ClientTransactionManager(web3, ACCOUNTS.get(2));
-            RNS rnsContract;
-            RNS rnsContractFrom2;
-            PublicResolver resolverContract;
-            PublicResolver anotherResolverContract;
-            MultiChainResolver multiChainResolverContract;
-                rnsContract = RNS.deploy(web3,
-                        transactionManagerFrom0,
-                        BigInteger.valueOf(1000000l),
-                        BigInteger.valueOf(GAS_LIMIT)).send();
+            mainAccountAddress = ACCOUNTS.get(0);
+            alternateAccountAddress = ACCOUNTS.get(1);
+            anotherAlternateAccountAddress = ACCOUNTS.get(2);
 
-                rnsContractFrom2 = RNS.load(rnsContract.getContractAddress(),
+            ClientTransactionManager transactionManagerFromAlternateAccount =
+                    new ClientTransactionManager(web3, alternateAccountAddress);
+            ClientTransactionManager transactionManagerFromMainAccount =
+                    new ClientTransactionManager(web3, mainAccountAddress);
+            RNS rnsContractFromMainAccount = RNS.deploy(web3,
+                    transactionManagerFromMainAccount,
+                    BigInteger.valueOf(1000000l),
+                    BigInteger.valueOf(GAS_LIMIT)).send();
+            RNS rnsContractFromAlternateAccount =  RNS.load(
+                    rnsContractFromMainAccount.getContractAddress(),
+                    web3,
+                    transactionManagerFromAlternateAccount,
+                    new DefaultGasProvider());
+            PublicResolver resolverContract = PublicResolver.deploy(
+                    web3,
+                    transactionManagerFromMainAccount,
+                    BigInteger.valueOf(1000000l),
+                    BigInteger.valueOf(GAS_LIMIT),
+                    rnsContractFromMainAccount.getContractAddress()).send();
+            PublicResolver anotherResolverContract = PublicResolver.deploy(
+                    web3,
+                    transactionManagerFromAlternateAccount,
+                    BigInteger.valueOf(1000000l),
+                    BigInteger.valueOf(GAS_LIMIT),
+                    rnsContractFromMainAccount.getContractAddress()).send();
+            MultiChainResolver multiChainResolverContract = MultiChainResolver.deploy(
                         web3,
-                        transactionManagerFrom2,
-                        new DefaultGasProvider());
-
-                resolverContract = PublicResolver.deploy(
-                        web3,
-                        transactionManagerFrom0,
-                        BigInteger.valueOf(1000000l),
-                        BigInteger.valueOf(GAS_LIMIT),
-                        rnsContract.getContractAddress()).send();
-
-                anotherResolverContract = PublicResolver.deploy(
-                        web3,
-                        transactionManagerFrom2,
-                        BigInteger.valueOf(1000000l),
-                        BigInteger.valueOf(GAS_LIMIT),
-                        rnsContract.getContractAddress()).send();
-
-                multiChainResolverContract = MultiChainResolver.deploy(
-                        web3,
-                        transactionManagerFrom0,
+                        transactionManagerFromMainAccount,
                         BigInteger.valueOf(1000000l),
                         BigInteger.valueOf(GAS_LIMIT),
-                        rnsContract.getContractAddress(),
+                        rnsContractFromMainAccount.getContractAddress(),
                         resolverContract.getContractAddress()).send();
-            //TLD definition
-            byte[] rskHash = Hash.sha3(RSK_TLD.getBytes(Compat.UTF_8));
-            byte[] rifHash = Hash.sha3(RIF_TLD.getBytes(Compat.UTF_8));
-            byte[] multiHash = Hash.sha3("multi".getBytes(Compat.UTF_8));
 
-            byte[] fooHash = Hash.sha3(FOO.getBytes(Compat.UTF_8));
             byte[] nodeFooDotRsk = NameHash.nameHashAsBytes(fooName(RSK_TLD));
             byte[] nodeForAnotherResolver = NameHash.nameHashAsBytes(fooName(RIF_TLD));
-            byte[] nodeForMultiResolver = NameHash.nameHashAsBytes(MULTI_TLD);
+            byte[] nodeForMultiResolver = NameHash.nameHashAsBytes(fooName(MULTI_TLD));
 
-            String rnsAddress = rnsContract.getContractAddress();
+            String rnsAddress = rnsContractFromMainAccount.getContractAddress();
             String resolverAddress = resolverContract.getContractAddress();
             String multiChainResolverContractContractAddress = multiChainResolverContract.getContractAddress();
 
+            setSubowner(rnsContractFromMainAccount, RSK_TLD, mainAccountAddress, mainAccountAddress);
+            setSubowner(rnsContractFromMainAccount, RIF_TLD, mainAccountAddress, alternateAccountAddress);
+            setSubowner(rnsContractFromMainAccount, MULTI_TLD, mainAccountAddress, mainAccountAddress);
 
-            rnsContract.setSubnodeOwner(new byte[32], rskHash, ACCOUNTS.get(0)).send();
-            rnsContract.setSubnodeOwner(new byte[32], rifHash, ACCOUNTS.get(0)).send();
-            rnsContract.setSubnodeOwner(new byte[32], multiHash, ACCOUNTS.get(0)).send();
+            rnsContractFromMainAccount.setResolver(nodeFooDotRsk, resolverAddress).send();
+            rnsContractFromAlternateAccount.setResolver(nodeForAnotherResolver, anotherResolverContract.getContractAddress()).send();
+            rnsContractFromMainAccount.setResolver(nodeForMultiResolver, multiChainResolverContractContractAddress).send();
 
-            rnsContract.setSubnodeOwner(NameHash.nameHashAsBytes("rsk"), fooHash, ACCOUNTS.get(0)).send();
-            rnsContract.setSubnodeOwner(NameHash.nameHashAsBytes("rif"), fooHash, ACCOUNTS.get(2)).send();
-            rnsContract.setResolver(nodeFooDotRsk, resolverAddress).send();
-
-            rnsContractFrom2.setResolver(nodeForAnotherResolver, anotherResolverContract.getContractAddress()).send();
-            //rnsContract.setResolver(nodeForMultiResolver, multiChainResolverContractContractAddress).send();
-
-            anotherResolverContract.setAddr(nodeForAnotherResolver, ACCOUNTS.get(2)).send();
-            resolverContract.setAddr(nodeFooDotRsk, ACCOUNTS.get(0)).send();
-            assertEquals(resolverContract.addr(nodeFooDotRsk).send(), ACCOUNTS.get(0));
+            anotherResolverContract.setAddr(nodeForAnotherResolver, alternateAccountAddress).send();
+            resolverContract.setAddr(nodeFooDotRsk, mainAccountAddress).send();
+            assertEquals(resolverContract.addr(nodeFooDotRsk).send(), mainAccountAddress);
             resolverContract.setContent(nodeFooDotRsk, BYTES_FOR_TEST).send();
             resolver = new RnsResolver(web3, resolverAddress, rnsAddress);
             multiChainResolver = new RnsResolver(web3, multiChainResolverContractContractAddress, rnsAddress);
-            //multiChainResolverContract.setChainAddr(nodeForMultiResolver, TEST_CHAIN_ID, ACCOUNTS.get(2)).send();
-            //multiChainResolverContract.setChainAddr(nodeForMultiResolver, RnsResolver.RSK_CHAIN_ID, ACCOUNTS.get(0)).send();
+            multiChainResolverContract.setChainAddr(nodeForMultiResolver, TEST_CHAIN_ID, ACCOUNTS.get(2)).send();
+            multiChainResolverContract.setChainAddr(nodeForMultiResolver, RnsResolver.RSK_CHAIN_ID, ACCOUNTS.get(0)).send();
 
-            assertTrue("rns contract is not valid", rnsContract.isValid());
+            assertTrue("rns contract is not valid", rnsContractFromMainAccount.isValid());
             assertTrue("resolver contract is not valid", resolverContract.isValid());
         } catch (IOException e) {
             fail("IOException: " + e.getMessage() + " make sure node is in localhost:8545");
@@ -161,13 +154,13 @@ public class RnsResolverTest {
 
     @Test
     public void testMultiCripto() {
-        //0x99a12be4c89cbf6cfd11d1f2c029904a7b644368
         try {
-            String expectedAccount = ACCOUNTS.get(0);
-            String account = multiChainResolver.getAddress(MULTI_TLD);
+            String expectedAccount = mainAccountAddress;
+            String name = fooName(MULTI_TLD);
+            String account = multiChainResolver.getAddress(name);
             assertEquals("The first call should be from the PublicResolver", expectedAccount, account);
-            expectedAccount = ACCOUNTS.get(2);
-            account = multiChainResolver.getAddress(MULTI_TLD, TEST_CHAIN_ID);
+            expectedAccount = anotherAlternateAccountAddress;
+            account = multiChainResolver.getAddress(name, TEST_CHAIN_ID);
             assertEquals("The second call we specified chainId, so it should be another", expectedAccount, account);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -178,9 +171,9 @@ public class RnsResolverTest {
     @Test
     public void testSetAddress() {
         try {
-            String expectedAccount = ACCOUNTS.get(1);
+            String expectedAccount = alternateAccountAddress;
             String name = fooName(RSK_TLD);
-            assertTrue(resolver.setAddress(name, expectedAccount, ACCOUNTS.get(0)));
+            assertTrue(resolver.setAddress(name, expectedAccount, mainAccountAddress));
             String address = resolver.getAddress(name);
             assertEquals(expectedAccount, address);
         } catch (Exception e) {
@@ -191,8 +184,8 @@ public class RnsResolverTest {
     @Test
     public void testSetNotOwnedAddress() {
         try {
-            String expectedAccount = ACCOUNTS.get(1);
-            assertTrue(resolver.setAddress(fooName(RSK_TLD), expectedAccount, ACCOUNTS.get(0)));
+            String expectedAccount = alternateAccountAddress;
+            assertTrue(resolver.setAddress(fooName(RSK_TLD), expectedAccount, mainAccountAddress));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -202,7 +195,7 @@ public class RnsResolverTest {
     public void testSetContent() {
         try {
             String name = fooName(RSK_TLD);
-            resolver.setContent(name, HASH, ACCOUNTS.get(0));
+            resolver.setContent(name, HASH, mainAccountAddress);
             byte[] result = resolver.content(name);
             assertTrue(FastByteComparisons.equalBytes(result, HASH));
         } catch (Exception e) {
@@ -213,7 +206,7 @@ public class RnsResolverTest {
     @Test
     public void testSetContentToNotOwnedAddress() {
         try {
-            resolver.setContent(fooName(RSK_TLD), HASH, ACCOUNTS.get(1));
+            resolver.setContent(fooName(RSK_TLD), HASH, alternateAccountAddress);
             fail("An exception should rise");
         } catch (Exception e) {
             String msg = "VM Exception while processing transaction: revert";
@@ -246,8 +239,8 @@ public class RnsResolverTest {
     @Test
     public void testShouldResolveName() {
         try {
-            String result = resolver.getAddress(fooName(RSK_TLD)).toString();
-            assertEquals(ACCOUNTS.get(0), result);
+            String result = resolver.getAddress(fooName(RSK_TLD));
+            assertEquals(mainAccountAddress, result);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -257,7 +250,7 @@ public class RnsResolverTest {
     public void testDifferentResolverPublicResolver() {
         try {
             String result = resolver.getAddress(fooName(RIF_TLD));
-            assertEquals(ACCOUNTS.get(2), result);
+            assertEquals(alternateAccountAddress, result);
         } catch (Exception e) {
             fail(e.getMessage());
         }
