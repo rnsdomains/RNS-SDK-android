@@ -1,6 +1,6 @@
 <img src="/logo.png" alt="logo" height="200" />
 
-# RNS-Android-SDK
+# `RNS-Android-SDK`
 
 Implementation for resolvers for the RIF Name Service, available for Android.
 
