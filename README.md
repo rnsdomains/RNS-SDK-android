@@ -1,3 +1,5 @@
+<img src="/logo.png" alt="logo" height="200" />
+
 # RNS-Android-SDK
 
 Implementation for resolvers for the RIF Name Service, available for Android.
@@ -78,3 +80,19 @@ Then you can start using your resolver in the [AsyncTask](https://developer.andr
 ## Sample App
 
 Check how this SDK can be used on a [sample application](https://github.com/rnsdomains/rns-android-sampleapp).
+
+---
+
+## Related links
+
+- [RSK](https://rsk.co)
+    - [Docs](https://github.com/rsksmart/rskj/wiki)
+- [RIF](https://rifos.org)
+    - [Docs](https://www.rifos.org/documentation/)
+    - [Whitepaper](https://docs.rifos.org/rif-whitepaper-en.pdf)
+    - [Testnet faucet](https://faucet.rifos.org)
+- RNS
+    - [Docs](https://docs.rns.rifos.org)
+    - [Manager](https://rns.rifos.org)
+    - [Testnet registrar](https://testnet.rns.rifos.org)
+
